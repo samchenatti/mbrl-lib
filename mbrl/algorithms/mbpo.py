@@ -68,7 +68,9 @@ def evaluate(
     agent: SACAgent,
     num_episodes: int,
     video_recorder: VideoRecorder,
+    max_steps: int = 100
 ) -> float:
+    steps = 0
     avg_episode_reward = 0.0
     for episode in range(num_episodes):
         obs, _ = env.reset()
@@ -76,11 +78,12 @@ def evaluate(
         terminated = False
         truncated = False
         episode_reward = 0.0
-        while not terminated and not truncated:
+        while not terminated and not truncated and steps != max_steps:
             action = agent.act(obs)
             obs, reward, terminated, truncated, _ = env.step(action)
             video_recorder.record(env)
             episode_reward += reward
+            steps += 1
         avg_episode_reward += episode_reward
     return avg_episode_reward / num_episodes
 
@@ -128,6 +131,7 @@ def train(
     act_shape = env.action_space.shape
 
     mbrl.planning.complete_agent_cfg(env, cfg.algorithm.agent)
+    # print(hydra.utils.instantiate(cfg.algorithm.agent.action_space))
     agent = SACAgent(
         cast(pytorch_sac_pranz24.SAC, hydra.utils.instantiate(cfg.algorithm.agent))
     )
@@ -277,7 +281,11 @@ def train(
             # ------ Epoch ended (evaluate and save model) ------
             if (env_steps + 1) % cfg.overrides.epoch_length == 0:
                 avg_reward = evaluate(
-                    test_env, agent, cfg.algorithm.num_eval_episodes, video_recorder
+                    test_env,
+                    agent,
+                    10,
+                    video_recorder,
+                    500
                 )
                 logger.log_data(
                     mbrl.constants.RESULTS_LOG_NAME,
@@ -294,6 +302,10 @@ def train(
                     agent.sac_agent.save_checkpoint(
                         ckpt_path=os.path.join(work_dir, "sac.pth")
                     )
+
+                if avg_reward > 8_350 and avg_reward < 8_500:
+                    raise Exception('Finished')
+
                 epoch += 1
 
             env_steps += 1

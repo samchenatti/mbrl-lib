@@ -21,6 +21,18 @@ def _is_mujoco_gym_env(env: gym.wrappers.TimeLimit) -> bool:
     )
 
 
+class NoFreeze(Freeze):
+    def __init__(self, *args, **kwargs) -> None:
+        super().__init__()
+        
+    def __enter__(self):
+        pass
+        # return super().__enter__(env)
+    
+    def __exit__(self, *_args):
+        pass
+        # return super().__exit__(env)
+
 class FreezeMujoco(Freeze):
     """Provides a context to freeze a Mujoco environment.
 
@@ -67,7 +79,7 @@ class FreezeMujoco(Freeze):
 class MujocoEnvHandler(EnvHandler):
     """Env handler for Mujoco-backed gym envs"""
 
-    freeze = FreezeMujoco
+    freeze = NoFreeze#FreezeMujoco
 
     @staticmethod
     def is_correct_env_type(env: gym.wrappers.TimeLimit) -> bool:

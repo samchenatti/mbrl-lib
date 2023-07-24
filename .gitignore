@@ -8,6 +8,8 @@ notebooks/.ipynb_checkpoints
 _build
 __pycache__
 
+venv/
+
 # Distribution / packaging
 .Python
 build/

@@ -93,3 +93,8 @@ def humanoid(act: torch.Tensor, next_obs: torch.Tensor):
 
     done = done[:, None]
     return done
+
+
+def nao(act: torch.Tensor, next_obs: torch.Tensor):
+    batch_size = next_obs.shape[0]
+    return (next_obs[:, 0] < 0.35).reshape(batch_size, 1)

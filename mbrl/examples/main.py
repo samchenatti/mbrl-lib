@@ -12,6 +12,10 @@ import mbrl.algorithms.pets as pets
 import mbrl.algorithms.planet as planet
 import mbrl.util.env
 
+from mysac.envs.nao import WalkingNao
+import gymnasium
+
+gymnasium.register(id='WalkingNao-v0', entry_point=WalkingNao)
 
 @hydra.main(config_path="conf", config_name="main")
 def run(cfg: omegaconf.DictConfig):
@@ -21,7 +25,8 @@ def run(cfg: omegaconf.DictConfig):
     if cfg.algorithm.name == "pets":
         return pets.train(env, term_fn, reward_fn, cfg)
     if cfg.algorithm.name == "mbpo":
-        test_env, *_ = mbrl.util.env.EnvHandler.make_env(cfg)
+        # test_env, *_ = mbrl.util.env.EnvHandler.make_env(cfg)
+        test_env = env
         return mbpo.train(env, test_env, term_fn, cfg)
     if cfg.algorithm.name == "planet":
         return planet.train(env, cfg)

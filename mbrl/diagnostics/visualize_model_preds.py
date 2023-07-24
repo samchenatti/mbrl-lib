@@ -17,6 +17,11 @@ import mbrl.models
 import mbrl.planning
 import mbrl.util.common
 
+from mysac.envs.nao import WalkingNao
+import gymnasium
+
+gymnasium.register(id='WalkingNao-v0', entry_point=WalkingNao)
+
 VisData = Tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, np.ndarray]
 
 
@@ -301,4 +306,6 @@ if __name__ == "__main__":
         model_subdir=args.model_subdir,
     )
     use_mpc = isinstance(visualizer.agent, mbrl.planning.TrajectoryOptimizerAgent)
-    visualizer.run(use_mpc=use_mpc)
+    
+    for _ in range(100):
+        visualizer.run(use_mpc=use_mpc)
