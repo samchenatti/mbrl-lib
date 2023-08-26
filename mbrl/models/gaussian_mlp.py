@@ -16,6 +16,7 @@ import mbrl.util.math
 from .model import Ensemble
 from .util import EnsembleLinearLayer, truncated_normal_init
 
+from .ensemble_lstm_layer import EnsembleLSTMLayer
 
 class GaussianMLP(Ensemble):
     """Implements an ensemble of multi-layer perceptrons each modeling a Gaussian distribution.
@@ -86,6 +87,8 @@ class GaussianMLP(Ensemble):
         self.in_size = in_size
         self.out_size = out_size
 
+        print('in_size:', self.in_size, 'out_size:', self.out_size)
+
         def create_activation():
             if activation_fn_cfg is None:
                 activation_func = nn.ReLU()
@@ -97,9 +100,10 @@ class GaussianMLP(Ensemble):
 
         def create_linear_layer(l_in, l_out):
             return EnsembleLinearLayer(ensemble_size, l_in, l_out)
-
+        print('hid_size:', hid_size, ensemble_size)
         hidden_layers = [
-            nn.Sequential(create_linear_layer(in_size, hid_size), create_activation())
+            EnsembleLSTMLayer(ensemble_size, 50, hid_size),
+            nn.Sequential(create_linear_layer(hid_size, hid_size), create_activation())
         ]
         for i in range(num_layers - 1):
             hidden_layers.append(
@@ -354,10 +358,12 @@ class GaussianMLP(Ensemble):
         Returns:
             (tensor): a tensor with the squared error per output dimension, batched over model.
         """
-        assert model_in.ndim == 2 and target.ndim == 2
+        # assert model_in.ndim == 2 and target.ndim == 2
         with torch.no_grad():
+            print('in:', model_in.shape)
             pred_mean, _ = self.forward(model_in, use_propagation=False)
             target = target.repeat((self.num_members, 1, 1))
+            print(pred_mean.shape, target.shape)
             return F.mse_loss(pred_mean, target, reduction="none"), {}
 
     def sample_propagation_indices(

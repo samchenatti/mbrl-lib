@@ -12,10 +12,12 @@ import mbrl.algorithms.pets as pets
 import mbrl.algorithms.planet as planet
 import mbrl.util.env
 
-from mysac.envs.nao import WalkingNao
+from mysac.envs.nao import WalkingNao, RecurrentNAO
 import gymnasium
 
 gymnasium.register(id='WalkingNao-v0', entry_point=WalkingNao)
+gymnasium.register(id='RecurrentNAO-v0', entry_point=RecurrentNAO)
+
 
 @hydra.main(config_path="conf", config_name="main")
 def run(cfg: omegaconf.DictConfig):

@@ -127,7 +127,7 @@ def train(
     # ------------------- Initialization -------------------
     debug_mode = cfg.get("debug_mode", False)
 
-    obs_shape = env.observation_space.shape
+    obs_shape = (10, 30)  # env.observation_space.shape
     act_shape = env.action_space.shape
 
     mbrl.planning.complete_agent_cfg(env, cfg.algorithm.agent)
@@ -169,7 +169,7 @@ def train(
     random_explore = cfg.algorithm.random_initial_explore
     mbrl.util.common.rollout_agent_trajectories(
         env,
-        cfg.algorithm.initial_exploration_steps,
+        100,  # cfg.algorithm.initial_exploration_steps,
         mbrl.planning.RandomAgent(env) if random_explore else agent,
         {} if random_explore else {"sample": True, "batched": False},
         replay_buffer=replay_buffer,
@@ -198,6 +198,7 @@ def train(
     epoch = 0
     sac_buffer = None
     while env_steps < cfg.overrides.num_steps:
+        print(env_steps, cfg.overrides.num_steps)
         rollout_length = int(
             mbrl.util.math.truncated_linear(
                 *(cfg.overrides.rollout_schedule + [epoch + 1])
@@ -227,7 +228,7 @@ def train(
             ) = mbrl.util.common.step_env_and_add_to_buffer(
                 env, obs, agent, {}, replay_buffer
             )
-
+            print('!!', env_steps, cfg.overrides.freq_train_model)
             # --------------- Model Training -----------------
             if (env_steps + 1) % cfg.overrides.freq_train_model == 0:
                 mbrl.util.common.train_model_and_save_model_and_data(

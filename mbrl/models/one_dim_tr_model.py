@@ -84,7 +84,7 @@ class OneDTransitionRewardModel(Model):
         super().__init__(model.device)
         self.model = model
         self.input_normalizer: Optional[mbrl.util.math.Normalizer] = None
-        if normalize:
+        if False:
             self.input_normalizer = mbrl.util.math.Normalizer(
                 self.model.in_size,
                 self.model.device,
@@ -109,6 +109,11 @@ class OneDTransitionRewardModel(Model):
             obs = self.obs_process_fn(obs)
         obs = model_util.to_tensor(obs).to(self.device)
         action = model_util.to_tensor(action).to(self.device)
+
+        batch_size = action.shape[0]
+        action = action.reshape(batch_size, 1, 20)
+        action = torch.ones(1, 10, 1).to('cuda:0') * action
+
         model_in = torch.cat([obs, action], dim=obs.ndim - 1)
         if self.input_normalizer:
             # Normalizer lives on device
@@ -130,9 +135,16 @@ class OneDTransitionRewardModel(Model):
         model_in = self._get_model_input(obs, action)
         if self.learned_rewards:
             reward = model_util.to_tensor(reward).to(self.device).unsqueeze(reward.ndim)
+            # batch_size = reward.shape[0]
+            # reward = reward.reshape(batch_size, 1, 1)
+            # reward = torch.ones(1, 10, 1).to('cuda:0') * reward
+            print('OOO', target_obs.shape, reward.shape)
             target = torch.cat([target_obs, reward], dim=obs.ndim - 1)
+
         else:
             target = target_obs
+
+        print('Model in:', model_in.shape, ', target:', target.shape)
         return model_in.float(), target.float()
 
     def forward(self, x: torch.Tensor, *args, **kwargs) -> Tuple[torch.Tensor, ...]:
@@ -158,6 +170,11 @@ class OneDTransitionRewardModel(Model):
             action = action[None, :]
         if self.obs_process_fn:
             obs = self.obs_process_fn(obs)
+
+        batch_size = action.shape[0]
+        action = action.reshape(batch_size, 1, 20)
+        action = np.matmul(np.ones((1, 10, 1)), action)
+
         model_in_np = np.concatenate([obs, action], axis=obs.ndim - 1)
         self.input_normalizer.update_stats(model_in_np)
 

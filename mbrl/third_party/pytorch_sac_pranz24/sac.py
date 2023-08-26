@@ -11,6 +11,7 @@ from mbrl.third_party.pytorch_sac_pranz24.model import (
 )
 from mbrl.third_party.pytorch_sac_pranz24.utils import hard_update, soft_update
 
+from mbrl.third_party.pytorch_sac_pranz24.recurrent_model import RecurrentPolicyModel
 
 class SAC(object):
     def __init__(self, num_inputs, action_space, args):
@@ -35,7 +36,7 @@ class SAC(object):
         ).to(self.device)
         hard_update(self.critic_target, self.critic)
 
-        if self.policy_type == "Gaussian":
+        if self.policy_type in ["Gaussian", "Recurrent"]:
             # Target Entropy = −dim(A) (e.g. , -6 for HalfCheetah-v2) as given in the paper
             if self.automatic_entropy_tuning is True:
                 if args.target_entropy is None:
@@ -47,9 +48,19 @@ class SAC(object):
                 self.log_alpha = torch.zeros(1, requires_grad=True, device=self.device)
                 self.alpha_optim = Adam([self.log_alpha], lr=args.lr)
 
-            self.policy = GaussianPolicy(
-                num_inputs, action_space.shape[0], args.hidden_size, action_space
-            ).to(self.device)
+
+            if self.policy_type == "Recurrent":
+                self.policy = RecurrentPolicyModel(
+                    num_inputs=num_inputs,
+                    num_actions=action_space.shape[0],
+                    hidden_size=args.hidden_size
+                ).to(self.device)
+            
+            else:
+                self.policy = GaussianPolicy(
+                    num_inputs, action_space.shape[0], args.hidden_size, action_space
+                ).to(self.device)
+            
             self.policy_optim = Adam(self.policy.parameters(), lr=args.lr)
 
         else:
