@@ -70,9 +70,9 @@ def evaluate(
     video_recorder: VideoRecorder,
     max_steps: int = 100
 ) -> float:
-    steps = 0
     avg_episode_reward = 0.0
     for episode in range(num_episodes):
+        steps = 0
         obs, _ = env.reset()
         video_recorder.init(enabled=(episode == 0))
         terminated = False
