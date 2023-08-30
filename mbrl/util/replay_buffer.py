@@ -682,7 +682,7 @@ class ReplayBuffer:
         if "trajectory_indices" in data and len(data["trajectory_indices"]):
             self.trajectory_indices = data["trajectory_indices"]
 
-    def get_all(self, shuffle: bool = False) -> TransitionBatch:
+    def get_all(self, shuffle: bool = False, last_frame_only: bool = False) -> TransitionBatch:
         """Returns all data stored in the replay buffer.
 
         Args:
@@ -691,9 +691,9 @@ class ReplayBuffer:
         """
         if shuffle:
             permutation = self._rng.permutation(self.num_stored)
-            return self._batch_from_indices(permutation)
+            transition_batch = self._batch_from_indices(permutation)
         else:
-            return TransitionBatch(
+            transition_batch = TransitionBatch(
                 self.obs[: self.num_stored],
                 self.action[: self.num_stored],
                 self.next_obs[: self.num_stored],
@@ -701,6 +701,12 @@ class ReplayBuffer:
                 self.terminated[: self.num_stored],
                 self.truncated[: self.num_stored],
             )
+
+        if last_frame_only:
+            transition_batch.obs = transition_batch.obs[:, -1, :]
+            transition_batch.next_obs = transition_batch.next_obs[:, -1, :]
+
+        return transition_batch
 
     @property
     def rng(self) -> np.random.Generator:

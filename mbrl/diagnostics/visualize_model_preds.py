@@ -72,7 +72,7 @@ class Visualizer:
             reward_fn,
             generator=torch.Generator(self.dynamics_model.device),
         )
-
+        
         self.agent: mbrl.planning.Agent
         if agent_dir is None:
             self.agent = mbrl.planning.RandomAgent(self.env)

@@ -185,8 +185,8 @@ def train(
     )
     updates_made = 0
     env_steps = 0
-    model_env = mbrl.models.ModelEnv(
-        env, dynamics_model, termination_fn, None, generator=torch_generator
+    model_env = mbrl.models.model_env.RecurrentModelEnv(
+        env, dynamics_model, termination_fn, None, generator=torch_generator, frames=10
     )
     model_trainer = mbrl.models.ModelTrainer(
         dynamics_model,

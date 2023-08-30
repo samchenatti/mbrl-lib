@@ -7,6 +7,7 @@ from typing import Dict, Optional, Tuple
 import gymnasium as gym
 import numpy as np
 import torch
+from mbrl.models import Model
 
 import mbrl.types
 
@@ -137,6 +138,7 @@ class ModelEnv:
                 next_observs = next_observs.cpu().numpy()
                 rewards = rewards.cpu().numpy()
                 dones = dones.cpu().numpy()
+
             return next_observs, rewards, dones, next_model_state
 
     def render(self, mode="human"):
@@ -189,3 +191,45 @@ class ModelEnv:
 
             total_rewards = total_rewards.reshape(-1, num_particles)
             return total_rewards.mean(dim=1)
+
+
+class RecurrentModelEnv(ModelEnv):
+    def __init__(self, *args, **kwargs):
+        self.frames = kwargs.get('frames')
+
+        self.last_observations = np.zeros((4000, self.frames, 30)).astype('float32')
+
+        del kwargs['frames']
+
+        super().__init__(*args, **kwargs)
+
+    def _append_frame(self, frame: np.array) -> np.array:
+        """
+        Append a frame to the buffers end
+        """
+        for i in range(4000):
+            self.last_observations[i] = np.roll(self.last_observations[i], -30)
+            self.last_observations[i][-1] = frame[i]
+
+        return self.last_observations
+
+    def reset(self, initial_obs_batch, return_as_np: bool = True):
+        self.last_observations = np.zeros((4000, self.frames, 30)).astype('float32')
+        
+        return super().reset(initial_obs_batch[:, -1, :], return_as_np)
+
+    def step(self, actions, model_state, sample: bool = False):
+        next_observs, rewards, dones, next_model_state = super().step(
+            actions, model_state, sample
+        )
+
+        if self._return_as_np:
+            self._append_frame(frame=next_observs)
+            next_observs = self.last_observations
+
+        else:
+            next_observs.cpu().numpy()
+            self._append_frame(frame=next_observs)
+            next_observs = torch.from_numpy(self.last_observations)
+
+        return next_observs, rewards, dones, next_model_state

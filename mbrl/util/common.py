@@ -80,9 +80,9 @@ def create_one_dim_tr_model(
     if model_cfg._target_ == "mbrl.models.BasicEnsemble":
         model_cfg = model_cfg.member_cfg
     if model_cfg.get("in_size", None) is None:
-        model_cfg.in_size = 30 + 20 #obs_shape[0] + (act_shape[0] if act_shape else 1)
+        model_cfg.in_size = 30 + 20  # obs_shape[0] + (act_shape[0] if act_shape else 1)
     if model_cfg.get("out_size", None) is None:
-        model_cfg.out_size = 31 #obs_shape[0] + int(cfg.algorithm.learned_rewards)
+        model_cfg.out_size = 31  # obs_shape[0] + int(cfg.algorithm.learned_rewards)
 
     # Now instantiate the model
     model = hydra.utils.instantiate(cfg.dynamics_model)
@@ -213,6 +213,7 @@ def get_basic_buffer_iterators(
     ensemble_size: int = 1,
     shuffle_each_epoch: bool = True,
     bootstrap_permutes: bool = False,
+    last_frame_only: bool = False
 ) -> Tuple[TransitionIterator, Optional[TransitionIterator]]:
     """Returns training/validation iterators for the data in the replay buffer.
 
@@ -234,7 +235,7 @@ def get_basic_buffer_iterators(
         (tuple of :class:`mbrl.replay_buffer.TransitionIterator`): the training
         and validation iterators, respectively.
     """
-    data = replay_buffer.get_all(shuffle=True)
+    data = replay_buffer.get_all(shuffle=True, last_frame_only=last_frame_only)
     val_size = int(replay_buffer.num_stored * val_ratio)
     train_size = replay_buffer.num_stored - val_size
     train_data = data[:train_size]
@@ -397,9 +398,10 @@ def train_model_and_save_model_and_data(
         ensemble_size=len(model),
         shuffle_each_epoch=True,
         bootstrap_permutes=cfg.get("bootstrap_permutes", False),
+        last_frame_only=True
     )
     if hasattr(model, "update_normalizer"):
-        model.update_normalizer(replay_buffer.get_all())
+        model.update_normalizer(replay_buffer.get_all(last_frame_only=True))
     model_trainer.train(
         dataset_train,
         dataset_val=dataset_val,

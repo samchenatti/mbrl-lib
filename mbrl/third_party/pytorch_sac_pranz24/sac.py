@@ -11,7 +11,7 @@ from mbrl.third_party.pytorch_sac_pranz24.model import (
 )
 from mbrl.third_party.pytorch_sac_pranz24.utils import hard_update, soft_update
 
-from mbrl.third_party.pytorch_sac_pranz24.recurrent_model import RecurrentPolicyModel
+from mbrl.third_party.pytorch_sac_pranz24.recurrent_model import RecurrentPolicyModel, RecurrentQNetwork
 
 class SAC(object):
     def __init__(self, num_inputs, action_space, args):
@@ -26,14 +26,18 @@ class SAC(object):
 
         self.device = args.device
 
-        self.critic = QNetwork(num_inputs, action_space.shape[0], args.hidden_size).to(
-            device=self.device
-        )
+        # self.critic = QNetwork(num_inputs, action_space.shape[0], args.hidden_size).to(
+        #     device=self.device
+        # )
+        self.critic = RecurrentQNetwork(num_inputs, action_space.shape[0], args.hidden_size).to(self.device)
         self.critic_optim = Adam(self.critic.parameters(), lr=args.lr)
 
-        self.critic_target = QNetwork(
-            num_inputs, action_space.shape[0], args.hidden_size
-        ).to(self.device)
+        # self.critic_target = QNetwork(
+        #     num_inputs, action_space.shape[0], args.hidden_size
+        # ).to(self.device)
+        
+        self.critic_target = RecurrentQNetwork(num_inputs, action_space.shape[0], args.hidden_size).to(self.device)
+        
         hard_update(self.critic_target, self.critic)
 
         if self.policy_type in ["Gaussian", "Recurrent"]:
