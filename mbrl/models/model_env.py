@@ -197,7 +197,7 @@ class RecurrentModelEnv(ModelEnv):
     def __init__(self, *args, **kwargs):
         self.frames = kwargs.get('frames')
 
-        self.last_observations = np.zeros((4000, self.frames, 30)).astype('float32')
+        self.last_observations = None
 
         del kwargs['frames']
 
@@ -214,9 +214,9 @@ class RecurrentModelEnv(ModelEnv):
         return self.last_observations
 
     def reset(self, initial_obs_batch, return_as_np: bool = True):
-        self.last_observations = np.zeros((4000, self.frames, 30)).astype('float32')
-        
-        return super().reset(initial_obs_batch[:, -1, :], return_as_np)
+        self.last_observations = initial_obs_batch.copy()
+
+        return super().reset(self.last_observations[:, -1, :], return_as_np)
 
     def step(self, actions, model_state, sample: bool = False):
         next_observs, rewards, dones, next_model_state = super().step(
