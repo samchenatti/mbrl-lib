@@ -210,6 +210,7 @@ def train(
         sac_buffer = maybe_replace_sac_buffer(
             sac_buffer, obs_shape, act_shape, sac_buffer_capacity, cfg.seed
         )
+
         obs = None
         terminated = False
         truncated = False
@@ -229,7 +230,7 @@ def train(
             ) = mbrl.util.common.step_env_and_add_to_buffer(
                 env, obs, agent, {}, replay_buffer
             )
-            
+
             # print('!!', env_steps, cfg.overrides.freq_train_model)
             model_start_time = time.time()
             # --------------- Model Training -----------------
@@ -251,7 +252,7 @@ def train(
                     sac_buffer,
                     cfg.algorithm.sac_samples_action,
                     rollout_length,
-                    rollout_batch_size,
+                    cfg.overrides.freq_train_model,
                 )
 
                 if debug_mode:
@@ -263,7 +264,6 @@ def train(
                     )
             # print('Time to train model:', time.time() - model_start_time)
 
-
             # --------------- Agent Training -----------------
             sac_start_time = time.time()
             for _ in range(cfg.overrides.num_sac_updates_per_step):
@@ -273,7 +273,7 @@ def train(
                     which_buffer
                 ) < cfg.overrides.sac_batch_size:
                     break  # only update every once in a while
-                
+
                 agent.sac_agent.update_parameters(
                     which_buffer,
                     cfg.overrides.sac_batch_size,
