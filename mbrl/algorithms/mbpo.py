@@ -3,6 +3,7 @@
 # This source code is licensed under the MIT license found in the
 # LICENSE file in the root directory of this source tree.
 import os
+import time
 from typing import Optional, Sequence, cast
 
 import gymnasium as gym
@@ -228,7 +229,9 @@ def train(
             ) = mbrl.util.common.step_env_and_add_to_buffer(
                 env, obs, agent, {}, replay_buffer
             )
-            print('!!', env_steps, cfg.overrides.freq_train_model)
+            
+            # print('!!', env_steps, cfg.overrides.freq_train_model)
+            model_start_time = time.time()
             # --------------- Model Training -----------------
             if (env_steps + 1) % cfg.overrides.freq_train_model == 0:
                 mbrl.util.common.train_model_and_save_model_and_data(
@@ -258,8 +261,11 @@ def train(
                         f"Rollout length: {rollout_length}. "
                         f"Steps: {env_steps}"
                     )
+            # print('Time to train model:', time.time() - model_start_time)
+
 
             # --------------- Agent Training -----------------
+            sac_start_time = time.time()
             for _ in range(cfg.overrides.num_sac_updates_per_step):
                 use_real_data = rng.random() < cfg.algorithm.real_data_ratio
                 which_buffer = replay_buffer if use_real_data else sac_buffer
@@ -267,7 +273,7 @@ def train(
                     which_buffer
                 ) < cfg.overrides.sac_batch_size:
                     break  # only update every once in a while
-
+                
                 agent.sac_agent.update_parameters(
                     which_buffer,
                     cfg.overrides.sac_batch_size,
@@ -278,6 +284,7 @@ def train(
                 updates_made += 1
                 if not silent and updates_made % cfg.log_frequency_agent == 0:
                     logger.dump(updates_made, save=True)
+            # print('Time to train SAC:', time.time() - sac_start_time)
 
             # ------ Epoch ended (evaluate and save model) ------
             if (env_steps + 1) % cfg.overrides.epoch_length == 0:

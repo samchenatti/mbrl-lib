@@ -207,7 +207,7 @@ class RecurrentModelEnv(ModelEnv):
         """
         Append a frame to the buffers end
         """
-        for i in range(4000):
+        for i in range(frame.shape[0]):
             self.last_observations[i] = np.roll(self.last_observations[i], -30)
             self.last_observations[i][-1] = frame[i]
 
